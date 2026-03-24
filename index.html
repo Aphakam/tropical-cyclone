@@ -73,9 +73,20 @@
             </div>
         </header>
 
+        <!-- ═══ MOBILE SIDEBAR TOGGLE ═══ -->
+        <button class="mob-sidebar-toggle" id="btn-sidebar-toggle" type="button" title="แสดง/ซ่อนข้อมูล">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+        </button>
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
         <!-- ═══ MAP ═══ -->
         <section id="map-section">
             <div id="map"></div>
+
+            <!-- Mobile: toggle legend/stats -->
+            <button class="mob-panel-toggle glass" id="btn-panels-toggle" type="button" title="แสดง/ซ่อนสถิติ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+            </button>
 
             <!-- Map Controls -->
             <div class="map-toolbar glass" id="map-toolbar">

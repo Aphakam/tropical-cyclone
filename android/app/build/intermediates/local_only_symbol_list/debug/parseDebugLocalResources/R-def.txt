@@ -1,0 +1,10 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+id progress_bar
+id webview
+layout activity_main
+mipmap ic_launcher
+string app_name
+style Theme.StormTrack

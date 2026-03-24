@@ -485,6 +485,13 @@ function bindEvents() {
         if (e.key === 'ArrowLeft' && currentIdx > 0) updateDisplay(currentIdx - 1);
         if (e.key === ' ') { e.preventDefault(); togglePlay(); }
     });
+
+    // Mobile: sidebar drawer toggle
+    $('btn-sidebar-toggle').addEventListener('click', toggleMobileSidebar);
+    $('sidebar-backdrop').addEventListener('click', closeMobileSidebar);
+
+    // Mobile: legend/stats panels toggle
+    $('btn-panels-toggle').addEventListener('click', toggleMobilePanels);
 }
 
 function toggleRadius() {
@@ -517,6 +524,29 @@ function togglePlay() {
             else stopPlayback();
         }, speed);
     } else clearInterval(playInterval);
+}
+
+// ══════ MOBILE TOGGLES ══════
+function toggleMobileSidebar() {
+    const sidebar = $('sidebar');
+    const btn = $('btn-sidebar-toggle');
+    const backdrop = $('sidebar-backdrop');
+    const isOpen = sidebar.classList.toggle('open');
+    btn.classList.toggle('active', isOpen);
+    backdrop.classList.toggle('visible', isOpen);
+    setTimeout(() => map.invalidateSize(), 350);
+}
+
+function closeMobileSidebar() {
+    $('sidebar').classList.remove('open');
+    $('btn-sidebar-toggle').classList.remove('active');
+    $('sidebar-backdrop').classList.remove('visible');
+    setTimeout(() => map.invalidateSize(), 350);
+}
+
+function toggleMobilePanels() {
+    $('legend-panel').classList.toggle('mob-visible');
+    $('stats-panel').classList.toggle('mob-visible');
 }
 
 document.addEventListener('DOMContentLoaded', init);
