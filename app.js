@@ -18,9 +18,30 @@ let labelLayers = L.layerGroup();
 let showRadius = true;
 let showLabels = false;
 let showWindCircles = false;
+let timeMode = 'local';
 
 const $ = id => document.getElementById(id);
 const STORM_API_BASE = '/api/storm';
+
+function getPrimaryDateTime(point) {
+    if (!point) return timeMode === 'utc' ? 'No data' : 'ไม่มีข้อมูล';
+    return timeMode === 'utc' ? point.dateTimeEN : point.dateTimeTH;
+}
+
+function updateTimeModeButtons() {
+    $('mode-local').classList.toggle('active', timeMode === 'local');
+    $('mode-utc').classList.toggle('active', timeMode === 'utc');
+    $('datetime-label').textContent = timeMode === 'utc' ? 'เวลา (UTC)' : 'เวลา (Local)';
+}
+
+function setTimeMode(mode) {
+    timeMode = mode;
+    updateTimeModeButtons();
+    if (stormPath.length && stormPath[currentIdx]) {
+        $('datetime-primary').textContent = getPrimaryDateTime(stormPath[currentIdx]);
+        $('slider-label-current').textContent = getPrimaryDateTime(stormPath[currentIdx]);
+    }
+}
 
 function setStormHeader(title, subtitle) {
     $('storm-title').textContent = title;
@@ -36,8 +57,7 @@ function clearStormState(message) {
     radiusLayers.clearLayers();
     labelLayers.clearLayers();
     highlightLayers.clearLayers();
-    $('datetime-th').textContent = 'ไม่มีข้อมูล';
-    $('datetime-en').textContent = 'No data';
+    $('datetime-primary').textContent = timeMode === 'utc' ? 'No data' : 'ไม่มีข้อมูล';
     $('status-chip').className = 'status-chip';
     $('status-label').textContent = 'NO DATA';
     $('predict-chip').style.display = 'none';
@@ -95,7 +115,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 // ══════ INIT ══════
 function init() {
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView([15, 105], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
     trackLayers.addTo(map);
@@ -105,6 +125,7 @@ function init() {
     highlightLayers.addTo(map);
 
     bindEvents();
+    updateTimeModeButtons();
     
     // Load initial storm (NAKRI #267)
     $('storm-select').value = '267';
@@ -331,8 +352,7 @@ function updateDisplay(idx) {
     currentIdx = idx;
     const p = stormPath[idx], col = getColor(p.typeEN), w = getWind(p);
 
-    $('datetime-th').textContent = p.dateTimeTH;
-    $('datetime-en').textContent = p.dateTimeEN;
+    $('datetime-primary').textContent = getPrimaryDateTime(p);
     const chip = $('status-chip');
     chip.className = 'status-chip';
     $('status-label').textContent = p.typeEN.toUpperCase();
@@ -376,7 +396,7 @@ function updateDisplay(idx) {
     const progress = ((idx + 1) / stormPath.length) * 100;
     $('point-progress').style.width = `${progress}%`;
     $('time-slider').value = idx;
-    $('slider-label-current').textContent = p.dateTimeTH;
+    $('slider-label-current').textContent = getPrimaryDateTime(p);
     $('slider-track-bg').innerHTML = `<div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#00e5ff,#ffd740,#ff3b30);border-radius:3px;transition:width 0.15s ease;"></div>`;
 
     highlightLayers.clearLayers();
@@ -448,6 +468,8 @@ function bindEvents() {
     $('btn-next').addEventListener('click', () => { if (currentIdx < stormPath.length - 1) updateDisplay(currentIdx + 1); });
     $('btn-start').addEventListener('click', () => updateDisplay(0));
     $('btn-end').addEventListener('click', () => updateDisplay(stormPath.length - 1));
+    $('mode-local').addEventListener('click', () => setTimeMode('local'));
+    $('mode-utc').addEventListener('click', () => setTimeMode('utc'));
 
     $('btn-toggle-radius').addEventListener('click', toggleRadius);
     $('btn-toggle-labels').addEventListener('click', toggleLabelsBtn);
