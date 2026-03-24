@@ -834,11 +834,8 @@ body.android-app .popup-val {
 
 /* ═══ BACKDROP ═══ */
 body.android-app .sidebar-backdrop.visible {
-    display: block;
-    opacity: 1;
-    z-index: 900;
-    backdrop-filter: none !important;
-    background: rgba(0,0,0,0.1) !important;
+    display: none !important; /* Completely remove the dimming layer */
+    pointer-events: none;
 }
 
 body.android-app .storm-sheet-backdrop {
