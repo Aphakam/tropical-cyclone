@@ -1,0 +1,9 @@
+# Dockerfile for Storm Simulator Mobile Frontend — Optimizing for Railway
+FROM nginx:alpine
+
+# Copy ALL Mobile assets (HTML/JS/CSS/Data) into Nginx web root
+COPY android/app/src/main/assets/www /usr/share/nginx/html
+
+# Replace Nginx default port with Railway's $PORT environment variable at runtime
+# This is a trick to make Nginx compatible with dynamic ports
+CMD ["/bin/sh", "-c", "sed -i 's/listen  80;/listen '\"${PORT:-80}\"';/' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
