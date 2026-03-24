@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storm Track Simulator — พายุนากรี (NAKRI) #267</title>
+    <meta name="description" content="Interactive storm track simulation dashboard for Typhoon NAKRI (นากรี)">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- ═══ HEADER ═══ -->
+        <header id="top-bar">
+            <div class="header-left">
+                <img
+                    class="tmd-logo"
+                    src="https://tmd.go.th/CustomTheme3/logoes/Nav/logo_navbar.png"
+                    alt="กรมอุตุนิยมวิทยา"
+                >
+                <div class="header-title-block">
+                    <div class="header-badge">กรมอุตุนิยมวิทยา</div>
+                    <h1 id="storm-title">NAKRI — นากรี</h1>
+                    <p class="header-sub" id="storm-subtitle">Storm ID: <span class="mono">#267</span> &nbsp;|&nbsp; Western Pacific</p>
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="storm-selector-wrap">
+                    <select id="storm-select" class="storm-nav-select">
+                        <option value="0">พายุที่กำลังเกิดขึ้น</option>
+                        <option value="307">นูริ (NURI)</option>
+                        <option value="306">เปญา (PENA)</option>
+                        <option value="290">นกแอ่น (NOKAEN)</option>
+                        <option value="284">โคโตะ (KOTO)</option>
+                        <option value="289">พายุดีเปรสชัน (DEPRESSION)</option>
+                        <option value="288">ซินญาร (SINYARU)</option>
+                        <option value="283">ฟงวอง (FUNG-WONG)</option>
+                        <option value="279">คัลแมกี (KALMAEGI)</option>
+                        <option value="271">เฟิงเฉิน (FENGSHEN)</option>
+                        <option value="267" selected>นากรี (NAKRI)</option>
+                        <option value="266">หะลอง (HALONG)</option>
+                        <option value="265">แมตโม (MATMO)</option>
+                        <option value="261">บัวลอย (BUALOI)</option>
+                        <option value="257">นอกูรี (NEOGURI)</option>
+                        <option value="255">รากาซา (RAGASA)</option>
+                        <option value="254">มิแทก (MITAG)</option>
+                        <option value="253">ตาปะฮ์ (TAPAH)</option>
+                        <option value="252">เผ่ย์ผ่า (PEIPAH)</option>
+                        <option value="251">หนองฟ้า (NONGFA)</option>
+                        <option value="248">เหล่งเหลง (LINGLING)</option>
+                    </select>
+                </div>
+                <div class="status-chip" id="status-chip">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-label">TROPICAL DEPRESSION</span>
+                </div>
+                <div class="status-chip predict-chip" id="predict-chip" style="display:none;">
+                    <span class="predict-dot"></span>
+                    PREDICTED
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="header-meta">
+                    <span class="meta-label">เวลา (TH)</span>
+                    <span class="mono" id="datetime-th">08/10/2568 13:00</span>
+                </div>
+                <div class="header-meta">
+                    <span class="meta-label">เวลา (UTC)</span>
+                    <span class="mono" id="datetime-en">08/10/2568 06:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══ MAP ═══ -->
+        <section id="map-section">
+            <div id="map"></div>
+
+            <!-- Map Controls -->
+            <div class="map-toolbar glass" id="map-toolbar">
+                <button class="toolbar-btn active" id="btn-toggle-radius" title="แสดง/ซ่อน Predict Radius">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="4 4"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Radius</span>
+                </button>
+                <button class="toolbar-btn" id="btn-toggle-labels" title="แสดง/ซ่อน Labels">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+                    <span>Labels</span>
+                </button>
+                <button class="toolbar-btn" id="btn-toggle-wind-circles" title="แสดง/ซ่อน Strong Wind Radius">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6" stroke-dasharray="3 3"/></svg>
+                    <span>Wind R.</span>
+                </button>
+            </div>
+
+            <!-- Legend -->
+            <div class="map-overlay-panel glass" id="legend-panel">
+                <h4>⊕ สัญลักษณ์ (Legend)</h4>
+                <div class="legend-grid">
+                    <div class="legend-entry">
+                        <span class="ldot ldot-dep"></span>
+                        <span>Tropical Depression<br><small class="thai-label">พายุดีเปรสชัน</small></span>
+                    </div>
+                    <div class="legend-entry">
+                        <span class="ldot ldot-ts"></span>
+                        <span>Tropical Storm<br><small class="thai-label">พายุโซนร้อน</small></span>
+                    </div>
+                    <div class="legend-entry">
+                        <span class="ldot ldot-ty"></span>
+                        <span>Typhoon<br><small class="thai-label">ไต้ฝุ่น</small></span>
+                    </div>
+                    <div class="legend-divider"></div>
+                    <div class="legend-entry">
+                        <span class="lline lline-hist"></span>
+                        <span>Historical Path</span>
+                    </div>
+                    <div class="legend-entry">
+                        <span class="lline lline-pred"></span>
+                        <span>Predicted Track</span>
+                    </div>
+                    <div class="legend-entry">
+                        <span class="lcirc lcirc-pred"></span>
+                        <span>Predict Radius</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storm Stats -->
+            <div class="map-overlay-panel glass storm-stats-info" id="stats-panel">
+                <h4>📊 Storm Statistics</h4>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <span class="stat-key">ช่วงเวลา</span>
+                        <span class="mono stat-val" id="stat-period">08/10 — 15/10</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-key">ลมสูงสุด</span>
+                        <span class="mono stat-val highlight-val" id="stat-max-wind">70.0 kt</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-key">ระยะทางรวม</span>
+                        <span class="mono stat-val" id="stat-distance">— km</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-key">จำนวนจุด</span>
+                        <span class="mono stat-val" id="stat-points">40</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-key">สูงสุดเป็น</span>
+                        <span class="mono stat-val" id="stat-peak-type" style="color:var(--red)">Typhoon</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-key">ความเร็วเคลื่อนที่</span>
+                        <span class="mono stat-val" id="stat-move-speed">— km/h</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ SIDEBAR ═══ -->
+        <aside id="sidebar">
+            <!-- Wind Speed Gauge -->
+            <div class="sidebar-card">
+                <div class="card-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                    <span>WIND SPEED</span>
+                </div>
+                <div class="gauge-wrap">
+                    <svg class="gauge-svg" viewBox="0 0 200 135">
+                        <defs>
+                            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#00e5ff"/>
+                                <stop offset="50%" stop-color="#ffeb3b"/>
+                                <stop offset="100%" stop-color="#ff3b30"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="#1a2332" stroke-width="12" stroke-linecap="round"/>
+                        <path id="gauge-arc" d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="url(#gaugeGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 251.33"/>
+                        <text id="gauge-text" x="100" y="95" text-anchor="middle" fill="#c3f5ff" font-family="Space Grotesk" font-size="32" font-weight="700">30</text>
+                        <text x="100" y="112" text-anchor="middle" fill="#849396" font-family="Inter" font-size="11">knots</text>
+                        <text x="12" y="132" text-anchor="middle" fill="#849396" font-family="Inter" font-size="9">0</text>
+                        <text x="188" y="132" text-anchor="middle" fill="#849396" font-family="Inter" font-size="9">120</text>
+                    </svg>
+                </div>
+                <div class="wind-sub-row">
+                    <div class="wind-sub-item">
+                        <span class="sub-label">Measured</span>
+                        <span class="mono sub-val" id="wind-measured">30.0 kt</span>
+                    </div>
+                    <div class="wind-sub-item">
+                        <span class="sub-label">Predicted</span>
+                        <span class="mono sub-val" id="wind-predicted">— kt</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Position & Direction -->
+            <div class="sidebar-card">
+                <div class="card-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span>POSITION & MOTION</span>
+                </div>
+                <div class="data-grid">
+                    <div class="data-cell">
+                        <span class="data-key">Latitude</span>
+                        <span class="mono data-val" id="val-lat">19.00000°N</span>
+                    </div>
+                    <div class="data-cell">
+                        <span class="data-key">Longitude</span>
+                        <span class="mono data-val" id="val-lon">138.00000°E</span>
+                    </div>
+                    <div class="data-cell">
+                        <span class="data-key">Direction</span>
+                        <span class="data-val direction-display">
+                            <span class="compass-arrow" id="compass-arrow">↑</span>
+                            <span id="direction-text">NNW</span>
+                        </span>
+                    </div>
+                    <div class="data-cell">
+                        <span class="data-key">Move Speed</span>
+                        <span class="mono data-val" id="val-move-speed">— km/h</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classification -->
+            <div class="sidebar-card">
+                <div class="card-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span>CLASSIFICATION</span>
+                </div>
+                <div class="class-type-row" id="class-row">
+                    <span class="class-dot" id="class-dot"></span>
+                    <div>
+                        <div class="class-en" id="class-en">Tropical Depression</div>
+                        <div class="class-th" id="class-th">พายุดีเปรสชัน</div>
+                    </div>
+                    <span class="data-val" id="val-datatype" style="margin-left:auto">
+                        <span class="tag tag-historical">Historical</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Area & Radius -->
+            <div class="sidebar-card">
+                <div class="card-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    <span>AREA & RADIUS</span>
+                </div>
+                <div class="data-grid three-col">
+                    <div class="data-cell">
+                        <span class="data-key">Visual Radius</span>
+                        <span class="mono data-val highlight-val" id="val-area">50.0 km</span>
+                    </div>
+                    <div class="data-cell">
+                        <span class="data-key">Predict R.</span>
+                        <span class="mono data-val" id="val-predict-radius">0.0 km</span>
+                    </div>
+                    <div class="data-cell">
+                        <span class="data-key">Strong Wind R.</span>
+                        <span class="mono data-val" id="val-strong-wind">0.0 km</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wind Chart -->
+            <div class="sidebar-card">
+                <div class="card-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span>WIND SPEED HISTORY</span>
+                </div>
+                <canvas id="wind-chart" width="280" height="90"></canvas>
+            </div>
+
+            <!-- Counter -->
+            <div class="sidebar-card mini-card">
+                <div class="counter-row">
+                    <span>Data Point</span>
+                    <span class="mono counter-val"><span id="point-current">1</span> / <span id="point-total">40</span></span>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar" id="point-progress" style="width: 2.5%"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ═══ TIMELINE ═══ -->
+        <footer id="timeline-bar">
+            <div class="timeline-left">
+                <button id="btn-start" class="tl-btn" title="Go to Start">⏮</button>
+                <button id="btn-prev" class="tl-btn" title="Previous">◀</button>
+                <button id="btn-play" class="tl-btn tl-btn-play" title="Play/Pause">▶</button>
+                <button id="btn-next" class="tl-btn" title="Next">▶</button>
+                <button id="btn-end" class="tl-btn" title="Go to End">⏭</button>
+                <div class="speed-control">
+                    <label>Speed:</label>
+                    <select id="speed-select">
+                        <option value="1000">0.5x</option>
+                        <option value="500">1x</option>
+                        <option value="250" selected>2x</option>
+                        <option value="100">5x</option>
+                    </select>
+                </div>
+            </div>
+            <div class="timeline-center">
+                <div class="slider-track-wrapper">
+                    <div class="slider-track-bg" id="slider-track-bg"></div>
+                    <input type="range" id="time-slider" min="0" max="39" value="0" step="1">
+                </div>
+                <div class="slider-labels">
+                    <span class="mono" id="slider-label-start">08 Oct</span>
+                    <span class="mono" id="slider-label-current">08/10/2568 13:00</span>
+                    <span class="mono" id="slider-label-end">15 Oct</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
